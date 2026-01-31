@@ -13,9 +13,7 @@ matchesRouter.get("/", async (req, res) => {
 	const parsed = listMatchesQuerySchema.safeParse(req.query);
 
 	if (!parsed.success) {
-		return res
-			.status(400)
-			.json({ error: "Invalid query.", details: parsed.error.issues });
+		return res.status(400).json({ error: "Invalid query.", details: parsed.error.issues });
 	}
 
 	const limit = Math.min(parsed.data.limit ?? 50, MAX_LIMIT);
@@ -33,12 +31,10 @@ matchesRouter.post("/", async (req, res) => {
 	const parsed = createMatchSchema.safeParse(req.body);
 
 	if (!parsed.success) {
-		return res
-			.status(400)
-			.json({ error: "Invalid payload.", details: parsed.error.issues });
+		return res.status(400).json({ error: "Invalid payload.", details: parsed.error.issues });
 	}
 
-  const { startTime, endTime, homeScore, awayScore } = parsed.data;
+	const { startTime, endTime, homeScore, awayScore } = parsed.data;
 
 	try {
 		const [event] = await db
@@ -53,12 +49,17 @@ matchesRouter.post("/", async (req, res) => {
 			})
 			.returning();
 
-    if(req.app.locals.broadcastMatchCreated) {
-      req.app.locals.broadcastMatchCreated(event);
-    }
+		if (req.app.locals.broadcastMatchCreated) {
+			try {
+				req.app.locals.broadcastMatchCreated(event);
+			} catch (err) {
+				console.error("Failed to broadcast match creation.", err);
+			}
+		}
+
 		res.status(201).json({ data: event });
 	} catch (e) {
-    console.error("Failed to create match.", e);
+		console.error("Failed to create match.", e);
 		res.status(500).json({ error: "Failed to create match.", details: e.message });
 	}
 });
