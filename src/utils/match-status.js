@@ -8,7 +8,7 @@ export function getMatchStatus(startTime, endTime, now = new Date()) {
 		return null;
 	}
 
-	if (now < start) {
+	if (now <= start) {
 		return MATCH_STATUS.SCHEDULED;
 	}
 
